@@ -7,7 +7,7 @@ float operation(char* op, float a, float b)
 	float n = 0.;
 	if (!strcmp(op, "+")) n = a + b;
 	else if (!strcmp(op, "-")) n = a - b;
-	else if (!strcmp(op, ".")) n = a * b;
+	else if (!strcmp(op, ".") || !strcmp(op, "*")) n = a * b;
 	else if (!strcmp(op, "/")) n = a / b;
 	else printf("'%s' is not a valid operation.\n", op);
 	return n;
@@ -16,15 +16,13 @@ float operation(char* op, float a, float b)
 int main(int argc, char* argv[])
 {
 	float num;
-	if (argc == 1)
-	{
+	if (argc == 1) {
 		printf("\n");
 		printf("Use 'calc -help' to read instructions.\n");
 	}
-	else if (argc == 2)
-	{
-		if (!strcmp(argv[1], "-help"))
-		{
+	
+    else if (argc == 2) {
+		if (!strcmp(argv[1], "-help")) {
 			printf("\n");
 			printf("\n");
 			printf("-------------TERMINAL CALCULATOR ------------\n");	
@@ -35,19 +33,13 @@ int main(int argc, char* argv[])
 			printf("'10.000'\n");
 			printf("                                v0.0.1 - Beta\n");
 		}
-		else if (!strcmp(argv[1], "-version")) printf("Terminal Calculator v0.0.1 - Beta\n");
 		else printf("%s\n", argv[1]);
-	}
-	else 
-	{
+	} else {
 		if (argc % 2) printf("Please enter a valid operation\n");
-		else
-		{
+		else {
 			num = atof(argv[1]);
-			for (int i = 1; i < argc; i ++)
-			{
-				if (i % 2 == 0)
-				{
+			for (int i = 1; i < argc; i ++) {
+				if (i % 2 == 0)	{
 					num = operation(argv[i], num, atof(argv[i + 1]));
 				}
 			}
