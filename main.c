@@ -25,6 +25,10 @@ static char* lex(const char* str, long* iter)
                 ++j;
             }
             break;
+        case '(':
+        case ')':
+            token[j++] = str[i];
+            break;
         default:
             token[j++] = str[i];
             token[j] = str[i] == str[i + 1] ? str[i + 1] : 0;
@@ -93,11 +97,8 @@ static long parse(const char* str)
                 stackcount = stackcount ? stackcount - 1: stackcount;
                 break;
             default:
-                while (stackcount && oppres(tok) >= oppres(stack[stackcount - 1])) {
-                    if (*stack[stackcount - 1] == '(') {
-                        --stackcount;
-                        break;
-                    }
+                while (stackcount && *stack[stackcount - 1] != '(' &&
+                    oppres(tok) >= oppres(stack[stackcount - 1])) {
                     n = out[--outcount];
                     out[outcount - 1] = op(out[outcount - 1], n, stack[--stackcount]);
                 }

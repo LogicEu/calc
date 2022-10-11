@@ -21,7 +21,8 @@ cleanf() {
 }
 
 clean() {
-    cleanf $name 
+    cleanf $name
+    return 0 
 }
 
 install() {
