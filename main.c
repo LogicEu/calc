@@ -44,7 +44,6 @@ static char* lex(const char* str, long* iter)
             break;
     }
     token[j] = 0;
-    printf("%s\n", token);
     *iter += j;
     return token;
 }
