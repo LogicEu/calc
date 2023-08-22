@@ -3,12 +3,13 @@
 CC=gcc
 SRC=main.c
 STD=-std=c89
+OPT=-O2
 WFLAGS=-Wall -Wextra
 EXE=calc
 
 SCRIPT=build.sh
 
-CFLAGS= $(STD) $(WFLAGS) $(INC)
+CFLAGS= $(STD) $(OPT) $(WFLAGS) $(INC)
 
 $(EXE): $(SRC)
 	$(CC) -o $@ $^ $(CFLAGS)
