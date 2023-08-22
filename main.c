@@ -1,9 +1,11 @@
 #define NULL ((void*)0)
-#define isdigit(c) (c >= '0') && (c <= '9')
+#define isbetween(c, min, max) ((c >= min) && (c <= max))
+#define isdigit(c) ((c >= '0') && (c <= '9'))
 #define tokget(cmp, tok, i) do { tok[++i] = str[; } while (cmp); ++i;
 
+void exit(int);
 extern int printf(const char* fmt, ...);
-extern long atol(const char* str);
+extern long strtol(const char* str, char** endptr, int base);
 extern char* strcpy(char* dst, const char* src);
 
 static char* lex(const char* str, long* iter)
@@ -19,8 +21,14 @@ static char* lex(const char* str, long* iter)
         case '\r':
             ++(*iter);
             return lex(str, iter);
-        case '0' ... '9':
-            while (isdigit(str[i + j])) {
+        case '0':
+            if (str[i + 1] == 'x' || str[i + 1] == 'X') {
+                token[j++] = str[i];
+                token[j++] = str[i + 1];
+            }
+        case '1' ... '9':
+            while (isdigit(str[i + j]) || isbetween(str[i + j], 'a', 'f') ||
+                isbetween(str[i + j], 'A', 'F')) {
                 token[j] = str[i + j];
                 ++j;
             }
@@ -36,6 +44,7 @@ static char* lex(const char* str, long* iter)
             break;
     }
     token[j] = 0;
+    printf("%s\n", token);
     *iter += j;
     return token;
 }
@@ -60,7 +69,7 @@ static int oppres(const char* op)
 
 static long op(const long l, const long r, const char* p)
 {
-    switch(*p) {
+    switch (*p) {
         case '+': return l + r;
         case '-': return l - r;
         case '/': return l / r;
@@ -75,16 +84,40 @@ static long op(const long l, const long r, const char* p)
     return 0;
 }
 
+static long uop(const long l, const char p)
+{
+    switch (p) {
+        case '!': return !l;
+        case '+': return +l;
+        case '-': return -l;
+        case '~': return ~l;
+    }
+    return 0;
+}
+
 static long parse(const char* str)
 {
-    long out[0xff], outcount = 0, stackcount = 0, i = 0, n;
-    char* tok = lex(str, &i), stack[0xff][4];
+    long out[0xff], outcount = 0, stackcount = 0, unarycount = 0, i = 0, n;
+    char* tok = lex(str, &i), unary[0xff], stack[0xff][4];
     while (tok) {
         switch (*tok) {
             case 0:
                 break;
-            case '0' ... '9':
-                out[outcount++] = atol(tok);
+            case 'a' ... 'z':
+            case 'A' ... 'Z':
+            case '$': case '#': case '?': case '\'': case '"':
+            case '{': case '}': case '[': case ']': case '^': case '@':
+                printf("calc: error parsing invalid simbol: %s\n", tok);
+                exit(1);
+            case '0':
+                if (tok[1] == 'x' || tok[1] == 'X') {
+                    out[outcount++] = strtol(tok + 2, NULL, 16);
+                } else {
+                    out[outcount++] = strtol(tok + 1, NULL, 10);
+                }
+                break;
+            case '1' ... '9':
+                out[outcount++] = strtol(tok, NULL, 10);
                 break;
             case '(':
                 strcpy(stack[stackcount++], tok);
@@ -96,7 +129,14 @@ static long parse(const char* str)
                 }
                 stackcount = stackcount ? stackcount - 1: stackcount;
                 break;
+            case '-': case '+': case '!': case '~':
+                unary[unarycount++] = *tok;
+                break;
             default:
+                while (unarycount) {
+                    out[outcount - 1] = uop(out[outcount - 1], unary[--unarycount]);
+                }
+
                 while (stackcount && *stack[stackcount - 1] != '(' &&
                     oppres(tok) >= oppres(stack[stackcount - 1])) {
                     n = out[--outcount];
@@ -105,6 +145,10 @@ static long parse(const char* str)
                 strcpy(stack[stackcount++], tok);
         }
         tok = lex(str, &i);
+    }
+
+    while (unarycount) {
+        out[outcount - 1] = uop(out[outcount - 1], unary[--unarycount]);
     }
 
     while (stackcount) {
