@@ -39,11 +39,14 @@ static char* lex(const char* str, long* iter)
             break;
         default:
             token[j++] = str[i];
-            token[j] = str[i] == str[i + 1] ? str[i + 1] : 0;
-            j += !!token[j];
+            if ((str[i] == '>' || str[i] == '<' || str[i] == '&' || str[i] == '&') &&
+                 str[i] == str[i + 1]) {
+                token[j++] = str[i + 1];
+            }
             break;
     }
     token[j] = 0;
+    printf("%s\n", token);
     *iter += j;
     return token;
 }
@@ -96,6 +99,7 @@ static long uop(const long l, const char p)
 
 static long parse(const char* str)
 {
+    int accepts = 1, parens[0xff] = {0}, parencount = 1;
     long out[0xff], outcount = 0, stackcount = 0, unarycount = 0, i = 0, n;
     char* tok = lex(str, &i), unary[0xff], stack[0xff][4];
     while (tok) {
@@ -114,25 +118,45 @@ static long parse(const char* str)
                 } else {
                     out[outcount++] = strtol(tok + 1, NULL, 10);
                 }
+                accepts = 0;
                 break;
             case '1' ... '9':
                 out[outcount++] = strtol(tok, NULL, 10);
+                accepts = 0;
                 break;
             case '(':
                 strcpy(stack[stackcount++], tok);
+                parens[parencount++] = unarycount;
+                accepts = 1;
                 break;
             case ')':
+                while (unarycount > parens[parencount - 1]) {
+                    out[outcount - 1] = uop(out[outcount - 1], unary[--unarycount]);
+                }
+
                 while (stackcount && *stack[stackcount - 1] != '(') {
                     n = out[--outcount];
                     out[outcount - 1] = op(out[outcount - 1], n, stack[--stackcount]);
                 }
+
+                --parencount;
+                while (unarycount > parens[parencount - 1]) {
+                    out[outcount - 1] = uop(out[outcount - 1], unary[--unarycount]);
+                }
+
                 stackcount = stackcount ? stackcount - 1: stackcount;
+                accepts = 0;
                 break;
-            case '-': case '+': case '!': case '~':
+            case '!': case '~':
                 unary[unarycount++] = *tok;
                 break;
+            case '-': case '+':
+                if (accepts) {
+                    unary[unarycount++] = *tok;
+                    break;
+                }
             default:
-                while (unarycount) {
+                while (unarycount > parens[parencount - 1]) {
                     out[outcount - 1] = uop(out[outcount - 1], unary[--unarycount]);
                 }
 
@@ -142,6 +166,7 @@ static long parse(const char* str)
                     out[outcount - 1] = op(out[outcount - 1], n, stack[--stackcount]);
                 }
                 strcpy(stack[stackcount++], tok);
+                accepts = 1;
         }
         tok = lex(str, &i);
     }
