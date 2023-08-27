@@ -11,13 +11,16 @@ flags=(
     -Wextra
 )
 
-comp() {
-    $cc $src -o $name ${flags[*]}
-    echo "$cc $src -o $name ${flags[*]}"
+cmd() {
+    echo "$@" && $@
+}
+
+build() {
+    cmd $cc $src -o $name ${flags[*]}
 }
 
 cleanf() {
-    [ -f $1 ] && rm $1 && echo "deleted $1"
+    [ -f $1 ] && cmd rm $1
 }
 
 clean() {
@@ -26,25 +29,23 @@ clean() {
 }
 
 install() {
-    [ "$EUID" -ne 0 ] && echo "Use with 'sudo' to install" && exit
-
-    comp && mv $name /usr/local/bin
-    echo "Successfully installed $name in /usr/local/bin"
+    [ "$EUID" -ne 0 ] && echo "$0: use with sudo to install" && exit
+    build && cmd mv $name /usr/local/bin
+    echo "$0: installed $name in /usr/local/bin"
     return 0
 }
 
 uninstall() {
-    [ "$EUID" -ne 0 ] && echo "Use with 'sudo' to uninstall" && exit
-
+    [ "$EUID" -ne 0 ] && echo "$0: use with sudo to uninstall" && exit
     cleanf /usr/local/bin/$name
-    echo "Successfully uninstalled $name in /usr/local/bin"
+    echo "$0: uninstalled $name from /usr/local/bin"
     return 0
 }
 
 
 case "$1" in
-    "comp")
-        comp;;
+    "build")
+        build;;
     "clean")
         clean;;
     "install")
@@ -52,7 +53,9 @@ case "$1" in
     "uninstall")
         uninstall;;
     *)
-        echo "Use with 'comp' to compile."
-        echo "Run 'clean' to remove local builds."
-        echo "Run 'install' to install in /usr/local/bin";;
+        echo "$0 usage:"
+        echo -e "[ build ]\t: compile executable"
+        echo -e "[ clean ]\t: remove local builds"
+        echo -e "[ install ]\t: install executable in /usr/local/bin"
+        echo -e "[ uninstall ]\t: uninstall executable from /usr/local/bin"
 esac
