@@ -35,7 +35,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern int printf(const char*, ...);
 extern long strtol(const char*, char**, int);
 
-void tokcpy(char* dst, const char* src)
+static void tokcpy(char* dst, const char* src)
 {
     while (*src) {
         *dst++ = *src++;
