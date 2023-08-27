@@ -156,6 +156,11 @@ static long parse(const char* str, long* output)
                 expecting = 1;
                 break;
             case ')':
+                if (expecting) {
+                     printf("calc: invalid token when expecing value: %s\n", tok);
+                    return EXIT_FAILURE;
+                }
+
                 while (unarycount > parens[parencount - 1]) {
                     out[outcount - 1] = uop(out[outcount - 1], unary[--unarycount]);
                 }
@@ -175,6 +180,7 @@ static long parse(const char* str, long* output)
                 break;
             case '!': case '~':
                 unary[unarycount++] = *tok;
+                expecting = 1;
                 break;
             case '-': case '+':
                 if (expecting) {
@@ -183,9 +189,7 @@ static long parse(const char* str, long* output)
                 }
             default:
                 if (expecting) {
-                    printf("calc: invalid token %s after operator: %s\n", 
-                        tok, stack[stackcount - 1]
-                    );
+                    printf("calc: invalid token when expecting value: %s\n", tok);
                     return EXIT_FAILURE;
                 }
 
