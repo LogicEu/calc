@@ -164,6 +164,7 @@ static long parse(const char* str, long* output)
             case 'a' ... 'z':
             case 'A' ... 'Z':
                 printf("calc: invalid symbol in expression: %s\n", tok);
+                /* fallthrough */
             case '?':
                 return EXIT_FAILURE;
             case '0':
@@ -215,6 +216,7 @@ static long parse(const char* str, long* output)
                     unary[unarycount++] = *tok;
                     break;
                 }
+                /* fallthrough */
             default:
                 if (expecting) {
                     printf("calc: invalid token when expecting value: %s\n", tok);
