@@ -155,9 +155,10 @@ static long uop(const long l, const char p)
 
 static long parse(const char* str, long* output)
 {
-    int expecting = 1, parens[0xff] = {0}, parencount = 1;
-    long out[0xff], outcount = 0, stackcount = 0, unarycount = 0, i = 0, n;
+    int expecting, parens[0xff] = {0}, parencount = 1;
+    long out[0xff] = {0}, outcount = 0, stackcount = 0, unarycount = 0, i = 0, n;
     char unary[0xff], stack[0xff][4], *tok = lex(str, &i);
+    expecting = !!tok;
     while (tok) {
         switch (*tok) {
             case 'a' ... 'z':
@@ -183,8 +184,8 @@ static long parse(const char* str, long* output)
                 expecting = 1;
                 break;
             case ')':
-                if (expecting) {
-                     printf("calc: invalid token when expecing value: %s\n", tok);
+                if (expecting || parencount <= 1) {
+                    printf("calc: invalid token when expecing value: %s\n", tok);
                     return EXIT_FAILURE;
                 }
 
@@ -233,6 +234,11 @@ static long parse(const char* str, long* output)
                 expecting = 1;
         }
         tok = lex(str, &i);
+    }
+
+    if (expecting || parencount > 1) {
+        printf("calc: invalid unfinished expression: '%s'\n", str);
+        return EXIT_FAILURE;
     }
 
     while (unarycount) {
