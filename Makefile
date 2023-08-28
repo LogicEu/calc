@@ -1,7 +1,7 @@
 # calc Makefile
 
 CC=gcc
-SRC=main.c
+SRC=calc.c
 STD=-std=c89
 OPT=-O2
 WFLAGS=-Wall -Wextra

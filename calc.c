@@ -24,7 +24,7 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-*/
+********************** calc.c ************************ */
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
@@ -51,7 +51,7 @@ static char* lex(const char* str, long* iter)
         case 0:
             return NULL;
         case ' ': case '\n': case '\t': case '\r':
-            ++(*iter);
+            ++*iter;
             return lex(str, iter);
         case '0':
             if (str[i + 1] == 'x' || str[i + 1] == 'X') {
@@ -98,10 +98,7 @@ static char* lex(const char* str, long* iter)
     if (err) {
         printf("calc: operator '%s' is not supported\n", token);
         token[0] = '?';
-        token[1] = 0;
-        return token;
     }
-
     return token;
 }
 
@@ -215,8 +212,7 @@ static long parse(const char* str, long* output)
                 if (expecting) {
                     unary[unarycount++] = *tok;
                     break;
-                }
-                /* fallthrough */
+                } /* fallthrough */
             default:
                 if (expecting) {
                     printf("calc: invalid token when expecting value: %s\n", tok);
@@ -256,21 +252,48 @@ static long parse(const char* str, long* output)
     return EXIT_SUCCESS;
 }
 
+static int calc_usage(int status)
+{
+    printf(
+        "usage:\ncalc '1 + (2 - 3) * 4 / 5'\n"
+        "<expr>\t: evaluate <expr> and print the result to stdout\n"
+        "-d\t: print output in decimal base (default)\n"
+        "-o\t: print output in octal base with a leading zero\n"
+        "-x\t: print output in hexadecimal base using lower case format\n"
+        "-X\t: print output in hexadecimal base using upper case format\n"
+        "-h\t: print this help message\n"
+    );
+    return status;
+}
+
 int main(const int argc, const char** argv)
 {
     int i;
     long output;
-
+    char fmt[8] = "%ld\n";
     if (argc < 2) {
-        printf("usage:\ncalc '1 + (2 - 3) * 4 / 5'\n");
-        return EXIT_FAILURE;
+        return calc_usage(EXIT_FAILURE);
     }
 
     for (i = 1; i < argc; ++i) {
+        if (argv[i][0] == '-' && argv[i][2] == 0) {
+            const char c = argv[i][1];
+            if (c == 'h') {
+                return calc_usage(EXIT_SUCCESS);
+            } else if (c == 'o' || c == 'x' || c == 'X' || c == 'd') {
+                fmt[2] = c;
+                continue;
+            }
+        }
+
         if (parse(argv[i], &output)) {
             return EXIT_FAILURE;
         }
-        printf("%ld\n", output);
+
+        if (fmt[2] == 'o' || fmt[2] == 'x' || fmt[2] == 'X') {
+            printf(fmt[2] == 'o' ? "0" : "0x");
+        }
+        printf(fmt, output);
     }
 
     return EXIT_SUCCESS;

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cc=gcc
-src=main.c
+src=calc.c
 name=calc
 
 flags=(
