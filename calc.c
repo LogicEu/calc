@@ -1,6 +1,4 @@
-/*
-
-Copyright (c) 2023 Eugenio Arteaga A.
+/* Copyright (c) 2023 Eugenio Arteaga A.
 
 Permission is hereby granted, free of charge, to any 
 person obtaining a copy of this software and associated 
@@ -85,8 +83,8 @@ static char* lex(const char* str, long* iter)
             break;
         default:
             token[j++] = str[i];
-            if ((str[i] == '!' && str[i + 1] == '=') ||    
-                ((str[i] == '>' || str[i] == '<') && 
+            if ((str[i] == '!' && str[i + 1] == '=') ||
+                ((str[i] == '>' || str[i] == '<') &&
                 (str[i + 1] == '=' || str[i + 1] == str[i])) ||
                 ((str[i] == '&' || str[i] == '|') && (str[i + 1] == str[i]))) {
                 token[j++] = str[i + 1];
@@ -121,9 +119,9 @@ static int oppres(const char* op)
     return 16;
 }
 
-static long op(const long l, const long r, const char* p)
+static long op(const long l, const long r, const char* op)
 {
-    switch (*p) {
+    switch (*op) {
         case '+': return l + r;
         case '-': return l - r;
         case '/': return l / r;
@@ -131,17 +129,17 @@ static long op(const long l, const long r, const char* p)
         case '%': return l % r;
         case '^': return l ^ r;
         case '=': return l == r; 
-        case '&': return p[1] == '&' ? l && r : l & r;
-        case '|': return p[1] == '|' ? l || r : l | r;
-        case '>': return p[1] == '>' ? l >> r : p[1] == '=' ? l >= r : l > r;
-        case '<': return p[1] == '<' ? l << r : p[1] == '=' ? l <= r : l < r;
+        case '&': return op[1] == '&' ? l && r : l & r;
+        case '|': return op[1] == '|' ? l || r : l | r;
+        case '>': return op[1] == '>' ? l >> r : op[1] == '=' ? l >= r : l > r;
+        case '<': return op[1] == '<' ? l << r : op[1] == '=' ? l <= r : l < r;
     }
     return 0;
 }
 
-static long uop(const long l, const char p)
+static long uop(const long l, const char op)
 {
-    switch (p) {
+    switch (op) {
         case '!': return !l;
         case '+': return +l;
         case '-': return -l;
@@ -150,11 +148,11 @@ static long uop(const long l, const char p)
     return 0;
 }
 
-static long parse(const char* str, long* output)
+static long eval(const char* str, long* output)
 {
-    int expecting, parens[0xff] = {0}, parencount = 1;
-    long out[0xff] = {0}, outcount = 0, stackcount = 0, unarycount = 0, i = 0, n;
-    char unary[0xff], stack[0xff][4], *tok = lex(str, &i);
+    int parens[0xff] = {0}, parencount = 1, expecting;
+    long operands[0xff] = {0}, count = 0, opcount = 0, uopcount = 0, index = 0, n;
+    char ops[0xff][4], uops[0xff], *tok = lex(str, &index);
     expecting = !!tok;
     while (tok) {
         switch (*tok) {
@@ -166,19 +164,19 @@ static long parse(const char* str, long* output)
                 return EXIT_FAILURE;
             case '0':
                 if (tok[1] == 'x' || tok[1] == 'X') {
-                    out[outcount++] = strtol(tok + 2, NULL, 16);
+                    operands[count++] = strtol(tok + 2, NULL, 16);
                 } else {
-                    out[outcount++] = strtol(tok + 1, NULL, 8);
+                    operands[count++] = strtol(tok + 1, NULL, 8);
                 }
                 expecting = 0;
                 break;
             case '1' ... '9':
-                out[outcount++] = strtol(tok, NULL, 10);
+                operands[count++] = strtol(tok, NULL, 10);
                 expecting = 0;
                 break;
             case '(':
-                tokcpy(stack[stackcount++], tok);
-                parens[parencount++] = unarycount;
+                tokcpy(ops[opcount++], tok);
+                parens[parencount++] = uopcount;
                 expecting = 1;
                 break;
             case ')':
@@ -187,30 +185,30 @@ static long parse(const char* str, long* output)
                     return EXIT_FAILURE;
                 }
 
-                while (unarycount > parens[parencount - 1]) {
-                    out[outcount - 1] = uop(out[outcount - 1], unary[--unarycount]);
+                while (uopcount > parens[parencount - 1]) {
+                    operands[count - 1] = uop(operands[count - 1], uops[--uopcount]);
                 }
 
-                while (stackcount && *stack[stackcount - 1] != '(') {
-                    n = out[--outcount];
-                    out[outcount - 1] = op(out[outcount - 1], n, stack[--stackcount]);
+                while (opcount && *ops[opcount - 1] != '(') {
+                    n = operands[--count];
+                    operands[count - 1] = op(operands[count - 1], n, ops[--opcount]);
                 }
 
                 --parencount;
-                while (unarycount > parens[parencount - 1]) {
-                    out[outcount - 1] = uop(out[outcount - 1], unary[--unarycount]);
+                while (uopcount > parens[parencount - 1]) {
+                    operands[count - 1] = uop(operands[count - 1], uops[--uopcount]);
                 }
 
-                stackcount = stackcount ? stackcount - 1: stackcount;
+                opcount = opcount ? opcount - 1 : opcount;
                 expecting = 0;
                 break;
             case '!': case '~':
-                unary[unarycount++] = *tok;
+                uops[uopcount++] = *tok;
                 expecting = 1;
                 break;
             case '-': case '+':
                 if (expecting) {
-                    unary[unarycount++] = *tok;
+                    uops[uopcount++] = *tok;
                     break;
                 } /* fallthrough */
             default:
@@ -219,19 +217,24 @@ static long parse(const char* str, long* output)
                     return EXIT_FAILURE;
                 }
 
-                while (unarycount > parens[parencount - 1]) {
-                    out[outcount - 1] = uop(out[outcount - 1], unary[--unarycount]);
+                while (uopcount > parens[parencount - 1]) {
+                    operands[count - 1] = uop(operands[count - 1], uops[--uopcount]);
                 }
 
-                while (stackcount && *stack[stackcount - 1] != '(' &&
-                    oppres(tok) >= oppres(stack[stackcount - 1])) {
-                    n = out[--outcount];
-                    out[outcount - 1] = op(out[outcount - 1], n, stack[--stackcount]);
+                while (opcount && *ops[opcount - 1] != '(' &&
+                    oppres(tok) >= oppres(ops[opcount - 1])) {
+                    n = operands[--count];
+                    operands[count - 1] = op(operands[count - 1], n, ops[--opcount]);
                 }
-                tokcpy(stack[stackcount++], tok);
+                tokcpy(ops[opcount++], tok);
                 expecting = 1;
         }
-        tok = lex(str, &i);
+
+        if (count >= 0xff || opcount >= 0xff || uopcount >= 0xff) {
+            printf("calc: expression too long to parse: %s\n", str);
+            return EXIT_FAILURE;
+        }
+        tok = lex(str, &index);
     }
 
     if (expecting || parencount > 1) {
@@ -239,16 +242,16 @@ static long parse(const char* str, long* output)
         return EXIT_FAILURE;
     }
 
-    while (unarycount) {
-        out[outcount - 1] = uop(out[outcount - 1], unary[--unarycount]);
+    while (uopcount) {
+        operands[count - 1] = uop(operands[count - 1], uops[--uopcount]);
     }
 
-    while (stackcount) {
-        n = out[--outcount];
-        out[outcount - 1] = op(out[outcount - 1], n, stack[--stackcount]);
+    while (opcount) {
+        n = operands[--count];
+        operands[count - 1] = op(operands[count - 1], n, ops[--opcount]);
     }
 
-    *output = out[0];
+    *output = operands[0];
     return EXIT_SUCCESS;
 }
 
@@ -268,8 +271,7 @@ static int calc_usage(int status)
 
 int main(const int argc, const char** argv)
 {
-    int i;
-    long output;
+    long i, output, status;
     char fmt[8] = "%ld\n";
     if (argc < 2) {
         return calc_usage(EXIT_FAILURE);
@@ -286,16 +288,13 @@ int main(const int argc, const char** argv)
             }
         }
 
-        if (parse(argv[i], &output)) {
-            return EXIT_FAILURE;
+        if (!(status = eval(argv[i], &output))) {
+            if (fmt[2] == 'o' || fmt[2] == 'x' || fmt[2] == 'X') {
+                printf(fmt[2] == 'o' ? "0" : "0x");
+            }
+            printf(fmt, output);
         }
-
-        if (fmt[2] == 'o' || fmt[2] == 'x' || fmt[2] == 'X') {
-            printf(fmt[2] == 'o' ? "0" : "0x");
-        }
-        printf(fmt, output);
     }
-
-    return EXIT_SUCCESS;
+    return status;
 }
 

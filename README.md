@@ -27,7 +27,7 @@ using stacks and no recursion.
 | -o | print output in octal base with a leading zero |
 | -x | print output in hexadecimal base using lower case format |
 | -X | print output in hexadecimal base using upper case format |
-| -h | print this help message |
+| -h | print help message with usage information |
 
 Here are some valid example expressions:
 
