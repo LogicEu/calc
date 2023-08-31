@@ -15,10 +15,11 @@ $(EXE): $(SRC)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 clean: $(SCRIPT)
-	./$^ $@
+	$(RM) $(EXE)
 
 install: $(SCRIPT)
 	./$^ $@
 
 uninstall: $(SCRIPT)
 	./$^ $@./$^ $@
+
