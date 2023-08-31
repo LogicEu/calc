@@ -42,7 +42,6 @@ uninstall() {
     return 0
 }
 
-
 case "$1" in
     "build")
         build;;
@@ -59,3 +58,4 @@ case "$1" in
         echo -e "[ install ]\t: install executable in /usr/local/bin"
         echo -e "[ uninstall ]\t: uninstall executable from /usr/local/bin"
 esac
+
