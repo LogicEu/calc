@@ -56,6 +56,6 @@ case "$1" in
         echo -e "[ build ]\t: compile executable"
         echo -e "[ clean ]\t: remove local builds"
         echo -e "[ install ]\t: install executable in /usr/local/bin"
-        echo -e "[ uninstall ]\t: uninstall executable from /usr/local/bin"
+        echo -e "[ uninstall ]\t: uninstall executable from /usr/local/bin";;
 esac
 
