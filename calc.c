@@ -45,7 +45,7 @@ static char* lex(const char* str, long* iter)
 {
     static char token[0xff];
     long i = *iter, j = 0, err = 0;
-    switch(str[i]) {
+    switch (str[i]) {
         case 0:
             return NULL;
         case ' ': case '\n': case '\t': case '\r':
@@ -57,8 +57,8 @@ static char* lex(const char* str, long* iter)
                 token[j++] = str[i + 1];
             }
         case '1' ... '9':
-            while (isdigit(str[i + j]) || isbetween(str[i + j], 'a', 'f') ||
-                isbetween(str[i + j], 'A', 'F')) {
+            while (isdigit(str[i + j]) || ((str[i + 1] == 'x' || str[i + 1] == 'X') && 
+                (isbetween(str[i + j], 'a', 'f') || isbetween(str[i + j], 'A', 'F')))) {
                 token[j] = str[i + j];
                 ++j;
             }

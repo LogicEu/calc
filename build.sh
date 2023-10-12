@@ -2,7 +2,9 @@
 
 cc=gcc
 src=calc.c
+tst=test.c
 name=calc
+tstname=test
 
 flags=(
     -std=c89
@@ -19,12 +21,17 @@ build() {
     cmd $cc $src -o $name ${flags[*]}
 }
 
+ctest() {
+    cmd $cc $tst -o $tstname ${flags[*]}
+}
+
 cleanf() {
-    [ -f $1 ] && cmd rm $1
+    [ -f $1 ] && cmd rm -f $1
 }
 
 clean() {
     cleanf $name
+    cleanf $tstname
     return 0 
 }
 
@@ -45,6 +52,10 @@ uninstall() {
 case "$1" in
     "build")
         build;;
+    "test")
+        ctest;;
+    "all")
+        build && ctest;;
     "clean")
         clean;;
     "install")
@@ -53,7 +64,9 @@ case "$1" in
         uninstall;;
     *)
         echo "$0 usage:"
-        echo -e "[ build ]\t: compile executable"
+        echo -e "[ build ]\t: compile calc.c as 'calc'"
+        echo -e "[ test ]\t: compile test.c as 'test'"
+        echo -e "[ all ]\t: compile both executables"
         echo -e "[ clean ]\t: remove local builds"
         echo -e "[ install ]\t: install executable in /usr/local/bin"
         echo -e "[ uninstall ]\t: uninstall executable from /usr/local/bin";;
